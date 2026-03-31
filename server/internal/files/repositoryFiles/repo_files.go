@@ -6,8 +6,13 @@ type RepoFiles struct {
 	repo *domain.Repository
 }
 
-func NewHTTPHandlers(repo *domain.Repository) *HTTPHandlers {
-	return &HTTPHandlers{
+func NewHRepoFiles(repo *domain.Repository) *RepoFiles {
+	return &RepoFiles{
 		repo: repo,
 	}
+}
+
+func (r *RepoFiles) CreateFile() error {
+
+	return nil
 }

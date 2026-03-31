@@ -13,6 +13,6 @@ func NewHandlersFiles() {
 
 }
 
-func (h *HandlersFiles) HandlersFiles(w http.ResponseWriter, r *http.Request) {
-
+func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
+	// h.AddFile
 }

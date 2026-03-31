@@ -9,6 +9,9 @@ import (
 
 type HTTPServer struct {
 	httpHandlers *HTTPHandlers
+
+	//handlers_USER files.handlersfiles
+	//handlers_FILES user.handlersuser
 }
 
 func NewHTTPServer(HTTPHandler *HTTPHandlers) *HTTPServer {
