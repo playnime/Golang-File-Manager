@@ -3,11 +3,11 @@ package domain
 // Repository получает *sql.DB (соединение с БД)
 
 type User struct {
-	login    string
-	password int
-	messages []string
+	Login    string
+	Password string
+	Messages []string
 }
 
 type Repository struct {
-	bd []User
+	Bd []User
 }
