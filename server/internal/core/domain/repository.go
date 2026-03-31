@@ -11,3 +11,9 @@ type User struct {
 type Repository struct {
 	Bd []User
 }
+
+func NewRepo() *Repository {
+	return &Repository{
+		Bd: make([]User, 0),
+	}
+}
