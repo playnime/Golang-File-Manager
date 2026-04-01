@@ -4,14 +4,15 @@ import (
 	"lab2pepe/server/internal/users/repositoryUsers"
 )
 
-type ServiceFiles struct {
+type ServiceUsers struct {
 	RepoFiles *repositoryUsers.RepoUsers
 }
 
-func NewServiceUsers() {
-
+func NewServiceUsers(repo *repositoryUsers.RepoUsers) *ServiceUsers {
+	return &ServiceUsers{RepoFiles: repo}
 }
 
-func (s *ServiceFiles) AddUsers() {
-	// s.CreateFiles
+func (s *ServiceUsers) AddUsers(login string, password string) error {
+
+	return s.RepoFiles.CreateUsers(login, password)
 }
