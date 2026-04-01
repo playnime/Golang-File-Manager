@@ -2,6 +2,7 @@ package transportUsers
 
 import (
 	"encoding/json"
+	"fmt"
 	"lab2pepe/server/internal/core/httpServer"
 	"lab2pepe/server/internal/users/serviceUsers"
 	"net/http"
@@ -34,6 +35,19 @@ func (h *HandlersUsers) HandleAddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	response := CreateUserResponseDTO{
+		Login: dto.Login,
+	}
+
+	b, err := json.MarshalIndent(response, "", "    ")
+
+	if err != nil {
+		panic(err)
+	}
 	w.WriteHeader(http.StatusCreated)
+	if _, err := w.Write(b); err != nil {
+		fmt.Println("failed to write http response:", err)
+		return
+	}
 
 }

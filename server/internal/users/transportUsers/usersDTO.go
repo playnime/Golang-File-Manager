@@ -19,3 +19,7 @@ func (t AddUsersDTO) ValidateForCreateUser() error {
 
 	return nil
 }
+
+type CreateUserResponseDTO struct {
+	Login string `json:"login"`
+}
