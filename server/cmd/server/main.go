@@ -9,7 +9,6 @@ import (
 	"lab2pepe/server/internal/users/repositoryUsers"
 	"lab2pepe/server/internal/users/serviceUsers"
 	"lab2pepe/server/internal/users/transportUsers"
-	"log"
 )
 
 func main() {
@@ -29,6 +28,6 @@ func main() {
 
 	server := httpServer.NewHTTPServer(HandlersFiles, HandlersUsers)
 	if err := server.StartServer(); err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
