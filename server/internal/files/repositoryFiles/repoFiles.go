@@ -15,39 +15,46 @@ func NewHRepoFiles(repo *domain.Repository) *RepoFiles {
 	}
 }
 
-func (r *RepoFiles) CreateMessage(login string, password string, message string) error {
+func (r *RepoFiles) RepoAddFile(login string, password string, message string) error {
 	var k int = -1
 	for i, v := range r.repo.Bd {
 		if login == v.Login {
 			if password == v.Password {
 				k = i
-				break
+			} else {
+				return errors.New("password is not correct")
 			}
+			break
 		}
 	}
 
 	if k != -1 {
 		r.repo.Bd[k].Messages = append(r.repo.Bd[k].Messages, message)
 	} else {
-		return errors.New("Login or password uncorrect")
+		return errors.New("Login is not correct")
 	}
 
 	return nil
 }
 
-func (r *RepoFiles) GetMessages(login string, password string) []string {
+func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error) {
 	var k int = -1
 	for i, v := range r.repo.Bd {
 		if login == v.Login {
 			if password == v.Password {
 				k = i
-				break
+			} else {
+				return nil, errors.New("password is not correct")
 			}
+			break
 		}
 	}
 
 	if k != -1 {
-		return r.repo.Bd[k].Messages
+		return r.repo.Bd[k].Messages, nil
 	}
-	return nil
+
+	return nil, errors.New("Login is not correct")
 }
+
+//еще будет функция скачивания файла
