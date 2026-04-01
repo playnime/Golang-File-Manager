@@ -1,16 +1,16 @@
 package transportFiles
 
-type AddMessageDTO struct {
+type AddFileDTO struct {
 	Login    string `json:"Login"`
 	Password string `json:"Password"`
-	Message  string `json:"Message"`
+	File     string `json:"File"`
 }
 
-type GetMessagesDTO struct {
+type GetFilesDTO struct {
 	Login    string `json:"Login"`
 	Password string `json:"Password"`
 }
 
-type GetMessagesResponseDTO struct {
-	Messages []string
+type GetFilesResponseDTO struct {
+	Files []string
 }
