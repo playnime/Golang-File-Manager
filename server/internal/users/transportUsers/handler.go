@@ -3,7 +3,7 @@ package transportUsers
 import (
 	"encoding/json"
 	"fmt"
-	"lab2pepe/server/internal/core/httpServer"
+	"lab2pepe/server/internal/core/httpUtils"
 	"lab2pepe/server/internal/users/serviceUsers"
 	"net/http"
 )
@@ -26,12 +26,12 @@ func (h *HandlersUsers) HandleAddUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := dto.ValidateForCreateUser(); err != nil {
-		httpServer.WriteError(w, err, http.StatusBadRequest)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
 		return
 	}
 
 	if err := h.ServiceFiles.AddUsers(dto.Login, dto.Password); err != nil {
-		httpServer.WriteError(w, err, http.StatusConflict)
+		httpUtils.WriteError(w, err, http.StatusConflict)
 		return
 	}
 
