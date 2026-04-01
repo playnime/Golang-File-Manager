@@ -8,10 +8,11 @@ type ServiceUsers struct {
 	RepoFiles *repositoryUsers.RepoUsers
 }
 
-func NewServiceUsers(service *ServiceUsers) {
-
+func NewServiceUsers(repo *repositoryUsers.RepoUsers) *ServiceUsers {
+	return &ServiceUsers{RepoFiles: repo}
 }
 
-func (s *ServiceUsers) AddUsers() {
-	// s.CreateUsers
+func (s *ServiceUsers) AddUsers(login string, password string) error {
+
+	return s.RepoFiles.CreateUsers(login, password)
 }

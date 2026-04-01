@@ -9,7 +9,7 @@ type RepoUsers struct {
 	repo *domain.Repository
 }
 
-func NewHRepoFiles(repo *domain.Repository) *RepoUsers {
+func NewRepoUsers(repo *domain.Repository) *RepoUsers {
 	return &RepoUsers{
 		repo: repo,
 	}
@@ -22,10 +22,14 @@ func (r *RepoUsers) CreateUsers(login string, password string) error {
 			return errors.New("Login exist's")
 		}
 	}
-	r.repo.Bd = append(r.repo.Bd, domain.User{
+
+	NewUser := domain.User{
 		Login:    login,
 		Password: password,
 		Messages: nil,
-	})
+	}
+
+	r.repo.Bd = append(r.repo.Bd, NewUser)
+
 	return nil
 }

@@ -1,9 +1,21 @@
 package transportUsers
 
+import "errors"
+
 type AddUsersDTO struct {
-	//Описание покупки
 	Login string `json:"login"`
 
-	//Сумма покупки
-	Password int `json:"password"`
+	Password string `json:"password"`
+}
+
+func (t AddUsersDTO) ValidateForCreateUser() error {
+	if len(t.Login) < 4 || len(t.Login) > 20 {
+		return errors.New("Login not correct")
+	}
+
+	if len(t.Password) < 4 || len(t.Password) > 20 {
+		return errors.New("password is not correct")
+	}
+
+	return nil
 }
