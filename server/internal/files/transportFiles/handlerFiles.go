@@ -19,34 +19,42 @@ func NewHandlersFiles(serviceFiles *serviceFiles.ServiceFiles) *HandlersFiles {
 	}
 }
 
-func (h *HandlersFiles) HandleAddMesssage(w http.ResponseWriter, r *http.Request) {
-	httpResonce, err := io.ReadAll(r.Body)
+func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
-		fmt.Println("error on reading body: ", err)
+		fmt.Println("error on parsing paket: ", err)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+
+	login := r.FormValue("Login")
+	password := r.FormValue("Password")
+
+	fmt.Println("login: ", login, ", password: ", password)
+
+	file, header, err := r.FormFile("File")
+	if err != nil {
+		fmt.Println("error on parsing file: ", err)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	fmt.Println("Filename: ", header.Filename)
+	fmt.Println("Filesize: ", header.Size)
+	fmt.Println("mime: ", header.Header.Get("Content-Type"))
+
+	err = h.ServiceFiles.AddFile(login, password, file, header)
+	if err != nil {
+		fmt.Println("error on creating qyery in database")
 		httpUtils.WriteError(w, err, http.StatusInternalServerError)
 		return
 	}
-
-	var User AddFileDTO
-
-	err = json.Unmarshal(httpResonce, &User)
-	if err != nil {
-		fmt.Println("error on unmarshalling response body: ", err)
-		httpUtils.WriteError(w, err, http.StatusBadRequest)
-		return
-	}
-
-	err = h.ServiceFiles.ServiceAddFile(User.Login, User.Password, User.File)
-	if err != nil {
-		fmt.Println("error on adding file: ", err)
-		httpUtils.WriteError(w, err, http.StatusBadRequest)
-		return
-	}
-	fmt.Println("file is on database")
 	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("file is added"))
 }
 
-func (h *HandlersFiles) HandleGetMessages(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
 	httpResonce, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println("error on reading body: ", err)
