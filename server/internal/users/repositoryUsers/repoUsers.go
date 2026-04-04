@@ -1,7 +1,6 @@
 package repositoryUsers
 
 import (
-	"errors"
 	"lab2pepe/server/internal/core/domain"
 )
 
@@ -15,21 +14,21 @@ func NewRepoUsers(repo *domain.Repository) *RepoUsers {
 	}
 }
 
-func (r *RepoUsers) CreateUsers(login string, password string) error {
+// func (r *RepoUsers) CreateUsers(login string, password string) error {
 
-	for _, v := range r.repo.Bd {
-		if v.Login == login {
-			return errors.New("Login exist's")
-		}
-	}
+// 	for _, v := range r.repo.Bd {
+// 		if v.Login == login {
+// 			return errors.New("Login exist's")
+// 		}
+// 	}
 
-	NewUser := domain.User{
-		Login:    login,
-		Password: password,
-		Messages: nil,
-	}
+// 	NewUser := domain.User{
+// 		Login:    login,
+// 		Password: password,
+// 		Messages: nil,
+// 	}
 
-	r.repo.Bd = append(r.repo.Bd, NewUser)
+// 	r.repo.Bd = append(r.repo.Bd, NewUser)
 
-	return nil
-}
+// 	return nil
+// }
