@@ -44,32 +44,6 @@ func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Filesize: ", header.Size)
 	fmt.Println("mime: ", header.Header.Get("Content-Type"))
 
-	/*dir := filepath.Join(os.Getenv("UPLOAD_DIR"), login)
-	err = os.MkdirAll(dir, 0755)
-	if err != nil {
-		fmt.Println("error on creating directory: ", err)
-		httpUtils.WriteError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	path := filepath.Join(dir, header.Filename)
-	data, err := os.Create(path)
-	if err != nil {
-		fmt.Println("error on creating file: ", err)
-		httpUtils.WriteError(w, err, http.StatusInternalServerError)
-		return
-	}
-	defer data.Close()
-
-	_, err = io.Copy(data, file)
-	if err != nil {
-		fmt.Println("error on copying file: ", err)
-		httpUtils.WriteError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	err = h.ServiceFiles.ServiceAddFile(login, password, header.Filename)*/
-
 	err = h.ServiceFiles.AddFile(login, password, file, header)
 	if err != nil {
 		fmt.Println("error on creating qyery in database")
@@ -79,33 +53,6 @@ func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("file is added"))
 }
-
-/*func (h *HandlersFiles) HandleAddMesssage(w http.ResponseWriter, r *http.Request) {
-	httpResonce, err := io.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println("error on reading body: ", err)
-		httpUtils.WriteError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	var User AddFileDTO
-
-	err = json.Unmarshal(httpResonce, &User)
-	if err != nil {
-		fmt.Println("error on unmarshalling response body: ", err)
-		httpUtils.WriteError(w, err, http.StatusBadRequest)
-		return
-	}
-
-	err = h.ServiceFiles.ServiceAddFile(User.Login, User.Password, User.File)
-	if err != nil {
-		fmt.Println("error on adding file: ", err)
-		httpUtils.WriteError(w, err, http.StatusBadRequest)
-		return
-	}
-	fmt.Println("file is on database")
-	w.WriteHeader(http.StatusCreated)
-}*/
 
 func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
 	httpResonce, err := io.ReadAll(r.Body)

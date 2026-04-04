@@ -16,10 +16,6 @@ func NewServiceFiles(repoFiles *repositoryfiles.RepoFiles) *ServiceFiles {
 	}
 }
 
-/*func (s *ServiceFiles) ServiceAddFile(login string, password string, message string) error {
-	return s.RepoFiles.RepoAddFile(login, password, message)
-}*/
-
 func (s *ServiceFiles) AddFile(login string, password string, file multipart.File, header *multipart.FileHeader) error {
 	path, err := s.RepoFiles.SaveFile(login, file, header.Filename)
 	if err != nil {

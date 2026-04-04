@@ -27,7 +27,6 @@ func (r *RepoFiles) SaveFile(login string, file multipart.File, filename string)
 	err := os.MkdirAll(dir, 0755)
 	if err != nil {
 		fmt.Println("error on creating directory: ", err)
-		//httpUtils.WriteError(w, err, http.StatusInternalServerError)
 		return "", err
 	}
 
@@ -35,7 +34,6 @@ func (r *RepoFiles) SaveFile(login string, file multipart.File, filename string)
 	data, err := os.Create(path)
 	if err != nil {
 		fmt.Println("error on creating file: ", err)
-		//httpUtils.WriteError(w, err, http.StatusInternalServerError)
 		return "", err
 	}
 	defer data.Close()
@@ -43,7 +41,6 @@ func (r *RepoFiles) SaveFile(login string, file multipart.File, filename string)
 	_, err = io.Copy(data, file)
 	if err != nil {
 		fmt.Println("error on copying file: ", err)
-		//httpUtils.WriteError(w, err, http.StatusInternalServerError)
 		return "", err
 	}
 
@@ -71,27 +68,6 @@ func (r *RepoFiles) SaveMeta(login string, password string, header *multipart.Fi
 	fmt.Println("lucky!!")
 	return nil
 }
-
-/*func (r *RepoFiles) RepoAddFile(login string, password string, message string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	path := login + "/" + message
-
-	_, err := r.pool.Exec(ctx,
-		`INSERT INTO files (user_id, file_name, path, size_bytes, mime_type, gd)
-         SELECT id, $3, $4, $5, $6, $7 FROM users
-         WHERE login = $1 AND password = $2`,
-		login, password, message, path,
-	)
-	if err != nil {
-		fmt.Println("Error on query: ", err)
-		return err
-	}
-
-	fmt.Println("lucky!!")
-	return nil
-}*/
 
 func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
