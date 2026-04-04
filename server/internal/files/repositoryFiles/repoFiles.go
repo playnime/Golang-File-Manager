@@ -19,23 +19,21 @@ func NewHRepoFiles(pool *pgxpool.Pool) *RepoFiles {
 }
 
 func (r *RepoFiles) RepoAddFile(login string, password string, message string) error {
-	ctx, cancell := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancell()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	_, err := r.Pool.Exec(ctx,
-		`
-		INSERT INTO files(user_id, file_name, path)
-		SELECT id, $3, $3 from users
-		WHERE login = $1 AND password = $2
-		`,
+		`INSERT INTO files (user_id, file_name, path)
+         SELECT id, $3, 'ddd' FROM users
+         WHERE login = $1 AND password = $2`,
 		login, password, message,
 	)
-
 	if err != nil {
 		fmt.Println("Error on query: ", err)
 		return err
 	}
-	fmt.Println("Query is lucky!")
+
+	fmt.Println("lucky!!")
 	return nil
 }
 
