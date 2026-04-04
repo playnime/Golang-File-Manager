@@ -14,5 +14,5 @@ func NewServiceUsers(repo *repositoryUsers.RepoUsers) *ServiceUsers {
 
 func (s *ServiceUsers) AddUsers(login string, password string) error {
 
-	return s.RepoFiles.CreateUsers(login, password)
+	return nil //s.RepoFiles.CreateUsers(login, password)
 }
