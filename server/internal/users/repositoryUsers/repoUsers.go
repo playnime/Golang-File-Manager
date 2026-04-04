@@ -1,34 +1,20 @@
 package repositoryUsers
 
 import (
-	"lab2pepe/server/internal/core/domain"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type RepoUsers struct {
-	repo *domain.Repository
+	Pool *pgxpool.Pool
 }
 
-func NewRepoUsers(repo *domain.Repository) *RepoUsers {
+func NewRepoUsers(pool *pgxpool.Pool) *RepoUsers {
 	return &RepoUsers{
-		repo: repo,
+		Pool: pool,
 	}
 }
 
-// func (r *RepoUsers) CreateUsers(login string, password string) error {
+func (r *RepoUsers) CreateUsers(login string, password string) error {
 
-// 	for _, v := range r.repo.Bd {
-// 		if v.Login == login {
-// 			return errors.New("Login exist's")
-// 		}
-// 	}
-
-// 	NewUser := domain.User{
-// 		Login:    login,
-// 		Password: password,
-// 		Messages: nil,
-// 	}
-
-// 	r.repo.Bd = append(r.repo.Bd, NewUser)
-
-// 	return nil
-// }
+	return nil
+}
