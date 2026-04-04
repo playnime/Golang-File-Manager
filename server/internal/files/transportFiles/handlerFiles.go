@@ -19,7 +19,68 @@ func NewHandlersFiles(serviceFiles *serviceFiles.ServiceFiles) *HandlersFiles {
 	}
 }
 
-func (h *HandlersFiles) HandleAddMesssage(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		fmt.Println("error on parsing paket: ", err)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+
+	login := r.FormValue("Login")
+	password := r.FormValue("Password")
+
+	fmt.Println("login: ", login, ", password: ", password)
+
+	file, header, err := r.FormFile("File")
+	if err != nil {
+		fmt.Println("error on parsing file: ", err)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	fmt.Println("Filename: ", header.Filename)
+	fmt.Println("Filesize: ", header.Size)
+	fmt.Println("mime: ", header.Header.Get("Content-Type"))
+
+	/*dir := filepath.Join(os.Getenv("UPLOAD_DIR"), login)
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		fmt.Println("error on creating directory: ", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	path := filepath.Join(dir, header.Filename)
+	data, err := os.Create(path)
+	if err != nil {
+		fmt.Println("error on creating file: ", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+	defer data.Close()
+
+	_, err = io.Copy(data, file)
+	if err != nil {
+		fmt.Println("error on copying file: ", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = h.ServiceFiles.ServiceAddFile(login, password, header.Filename)*/
+
+	err = h.ServiceFiles.AddFile(login, password, file, header)
+	if err != nil {
+		fmt.Println("error on creating qyery in database")
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("file is added"))
+}
+
+/*func (h *HandlersFiles) HandleAddMesssage(w http.ResponseWriter, r *http.Request) {
 	httpResonce, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println("error on reading body: ", err)
@@ -44,9 +105,9 @@ func (h *HandlersFiles) HandleAddMesssage(w http.ResponseWriter, r *http.Request
 	}
 	fmt.Println("file is on database")
 	w.WriteHeader(http.StatusCreated)
-}
+}*/
 
-func (h *HandlersFiles) HandleGetMessages(w http.ResponseWriter, r *http.Request) {
+func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
 	httpResonce, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println("error on reading body: ", err)

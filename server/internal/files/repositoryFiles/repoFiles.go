@@ -3,6 +3,10 @@ package repositoryfiles
 import (
 	"context"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,15 +22,65 @@ func NewHRepoFiles(pool *pgxpool.Pool) *RepoFiles {
 	}
 }
 
-func (r *RepoFiles) RepoAddFile(login string, password string, message string) error {
+func (r *RepoFiles) SaveFile(login string, file multipart.File, filename string) (string, error) {
+	dir := filepath.Join(os.Getenv("UPLOAD_DIR"), login)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+		fmt.Println("error on creating directory: ", err)
+		//httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return "", err
+	}
+
+	path := filepath.Join(dir, filename)
+	data, err := os.Create(path)
+	if err != nil {
+		fmt.Println("error on creating file: ", err)
+		//httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return "", err
+	}
+	defer data.Close()
+
+	_, err = io.Copy(data, file)
+	if err != nil {
+		fmt.Println("error on copying file: ", err)
+		//httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return "", err
+	}
+
+	return path, nil
+}
+
+func (r *RepoFiles) SaveMeta(login string, password string, header *multipart.FileHeader) error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	path := filepath.Join(login, header.Filename)
+
+	_, err := r.pool.Exec(ctx,
+		`INSERT INTO files (user_id, file_name, path, size_bytes, mime_type, gd)
+         SELECT id, $3, $4, $5, $6, $7 FROM users
+         WHERE login = $1 AND password = $2`,
+		login, password, header.Filename, path, header.Size, header.Header.Get("Content-Type"), 3,
+	)
+	if err != nil {
+		fmt.Println("Error on query: ", err)
+		return err
+	}
+
+	fmt.Println("lucky!!")
+	return nil
+}
+
+/*func (r *RepoFiles) RepoAddFile(login string, password string, message string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	path := login + "/" + message
 
 	_, err := r.pool.Exec(ctx,
-		`INSERT INTO files (user_id, file_name, path)
-         SELECT id, $3, $4 FROM users
+		`INSERT INTO files (user_id, file_name, path, size_bytes, mime_type, gd)
+         SELECT id, $3, $4, $5, $6, $7 FROM users
          WHERE login = $1 AND password = $2`,
 		login, password, message, path,
 	)
@@ -37,7 +91,7 @@ func (r *RepoFiles) RepoAddFile(login string, password string, message string) e
 
 	fmt.Println("lucky!!")
 	return nil
-}
+}*/
 
 func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -65,47 +119,3 @@ func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error
 
 	return files, nil
 }
-
-// func (r *RepoFiles) RepoAddFile(login string, password string, message string) error {
-// 	var k int = -1
-// 	for i, v := range r.repo.Bd {
-// 		if login == v.Login {
-// 			if password == v.Password {
-// 				k = i
-// 			} else {
-// 				return errors.New("password is not correct")
-// 			}
-// 			break
-// 		}
-// 	}
-
-// 	if k != -1 {
-// 		r.repo.Bd[k].Messages = append(r.repo.Bd[k].Messages, message)
-// 	} else {
-// 		return errors.New("Login is not correct")
-// 	}
-
-// 	return nil
-// }
-
-// func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error) {
-// 	var k int = -1
-// 	for i, v := range r.repo.Bd {
-// 		if login == v.Login {
-// 			if password == v.Password {
-// 				k = i
-// 			} else {
-// 				return nil, errors.New("password is not correct")
-// 			}
-// 			break
-// 		}
-// 	}
-
-// 	if k != -1 {
-// 		return r.repo.Bd[k].Messages, nil
-// 	}
-
-// 	return nil, errors.New("Login is not correct")
-// }
-
-//еще будет функция скачивания файла
