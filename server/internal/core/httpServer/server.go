@@ -28,7 +28,7 @@ func (s *HTTPServer) StartServer() error {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/add", s.httpFilesHandlers.HandleAddMesssage).Methods("POST")
-	//router.HandleFunc("/get", s.httpFilesHandlers.HandleGetMessages).Methods("GET")
+	router.HandleFunc("/get", s.httpFilesHandlers.HandleGetMessages).Methods("GET")
 	router.HandleFunc("/addusr", s.httpUsersHandlers.HandleAddUser).Methods("POST")
 
 	if err := http.ListenAndServe(":9091", router); err != nil {

@@ -9,12 +9,12 @@ import (
 )
 
 type RepoFiles struct {
-	Pool *pgxpool.Pool
+	pool *pgxpool.Pool
 }
 
 func NewHRepoFiles(pool *pgxpool.Pool) *RepoFiles {
 	return &RepoFiles{
-		Pool: pool,
+		pool: pool,
 	}
 }
 
@@ -22,11 +22,13 @@ func (r *RepoFiles) RepoAddFile(login string, password string, message string) e
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := r.Pool.Exec(ctx,
+	path := login + "/" + message
+
+	_, err := r.pool.Exec(ctx,
 		`INSERT INTO files (user_id, file_name, path)
-         SELECT id, $3, 'ddd' FROM users
+         SELECT id, $3, $4 FROM users
          WHERE login = $1 AND password = $2`,
-		login, password, message,
+		login, password, message, path,
 	)
 	if err != nil {
 		fmt.Println("Error on query: ", err)
@@ -38,10 +40,30 @@ func (r *RepoFiles) RepoAddFile(login string, password string, message string) e
 }
 
 func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error) {
-	ctx, cancell := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancell()
-	_ = ctx
-	return nil, nil
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := r.pool.Query(ctx,
+		`SELECT f.file_name FROM files f
+         JOIN users u ON u.id = f.user_id
+         WHERE u.login = $1 AND u.password = $2`,
+		login, password,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("repoFiles.RepoGetFiles: %w", err)
+	}
+	defer rows.Close()
+
+	var files []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, fmt.Errorf("repoFiles.RepoGetFiles scan: %w", err)
+		}
+		files = append(files, name)
+	}
+
+	return files, nil
 }
 
 // func (r *RepoFiles) RepoAddFile(login string, password string, message string) error {
