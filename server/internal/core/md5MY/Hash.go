@@ -132,3 +132,13 @@ func HASH(text []byte) []byte {
 
 	return out
 }
+
+func HashToString(hash []byte) string {
+	const hexChars = "0123456789abcdef"
+	result := make([]byte, len(hash)*2)
+	for i, b := range hash {
+		result[i*2] = hexChars[b>>4]
+		result[i*2+1] = hexChars[b&0x0f]
+	}
+	return string(result)
+}

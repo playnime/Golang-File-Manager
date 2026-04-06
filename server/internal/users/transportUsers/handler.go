@@ -19,18 +19,18 @@ func NewHandlersUser(service *serviceUsers.ServiceUsers) *HandlersUsers {
 func (h *HandlersUsers) HandleAddUser(w http.ResponseWriter, r *http.Request) {
 
 	var dto AddUsersDTO
-
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-
 	if err := dto.ValidateForCreateUser(); err != nil {
 		httpUtils.WriteError(w, err, http.StatusBadRequest)
 		return
 	}
 
-	if err := h.ServiceFiles.AddUsers(dto.Login, dto.Password); err != nil {
+	ctx := r.Context() // берём контекст здесь
+
+	if err := h.ServiceFiles.AddUsers(ctx, dto.Login, dto.Password); err != nil {
 		httpUtils.WriteError(w, err, http.StatusConflict)
 		return
 	}

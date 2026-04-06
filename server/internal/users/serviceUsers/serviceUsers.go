@@ -1,6 +1,7 @@
 package serviceUsers
 
 import (
+	"context"
 	"lab2pepe/server/internal/users/repositoryUsers"
 )
 
@@ -12,7 +13,7 @@ func NewServiceUsers(repo *repositoryUsers.RepoUsers) *ServiceUsers {
 	return &ServiceUsers{RepoFiles: repo}
 }
 
-func (s *ServiceUsers) AddUsers(login string, password string) error {
+func (s *ServiceUsers) AddUsers(ctx context.Context, login string, password string) error {
 
-	return nil //s.RepoFiles.CreateUsers(login, password)
+	return s.RepoFiles.CreateUser(ctx, login, password) //s.RepoFiles.CreateUsers(login, password)
 }
