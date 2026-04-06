@@ -28,7 +28,7 @@ func (h *HandlersUsers) HandleAddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context() // берём контекст здесь
+	ctx := r.Context()
 
 	if err := h.ServiceFiles.AddUsers(ctx, dto.Login, dto.Password); err != nil {
 		httpUtils.WriteError(w, err, http.StatusConflict)
@@ -50,4 +50,24 @@ func (h *HandlersUsers) HandleAddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+func (h *HandlersUsers) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	var dto LoginDTO
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+
+	token, err := h.ServiceFiles.Login(r.Context(), dto.Login, dto.Password)
+	if err != nil {
+		httpUtils.WriteError(w, err, http.StatusUnauthorized)
+		return
+	}
+
+	b, _ := json.Marshal(LoginResponseDTO{
+		Token: token,
+	})
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
 }

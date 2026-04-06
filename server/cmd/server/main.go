@@ -38,7 +38,7 @@ func main() {
 	ServiceUsers := serviceUsers.NewServiceUsers(RepoUsers)
 	HandlersUsers := transportUsers.NewHandlersUser(ServiceUsers)
 
-	server := httpServer.NewHTTPServer(HandlersFiles, HandlersUsers)
+	server := httpServer.NewHTTPServer(HandlersFiles, HandlersUsers, ServiceUsers)
 	if err := server.StartServer(); err != nil {
 		panic(err)
 	}

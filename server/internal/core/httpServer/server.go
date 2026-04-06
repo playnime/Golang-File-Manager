@@ -1,35 +1,72 @@
 package httpServer
 
 import (
+	"context"
 	"errors"
 	"lab2pepe/server/internal/files/transportFiles"
 	"lab2pepe/server/internal/users/transportUsers"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
 
+type contextKey string
+
+const UserIDKey contextKey = "userID"
+
+type AuthService interface {
+	GetUserIDByToken(ctx context.Context, token string) (int, error)
+}
+
 type HTTPServer struct {
 	httpFilesHandlers *transportFiles.HandlersFiles
 	httpUsersHandlers *transportUsers.HandlersUsers
-
-	//handlers_USER files.handlersfiles
-	//handlers_FILES user.handlersuser
+	authService       AuthService
 }
 
-func NewHTTPServer(httpFilesHandlers *transportFiles.HandlersFiles, httpUsersHandlers *transportUsers.HandlersUsers) *HTTPServer {
+func NewHTTPServer(
+	httpFilesHandlers *transportFiles.HandlersFiles,
+	httpUsersHandlers *transportUsers.HandlersUsers,
+	authService AuthService,
+) *HTTPServer {
 	return &HTTPServer{
 		httpFilesHandlers: httpFilesHandlers,
 		httpUsersHandlers: httpUsersHandlers,
+		authService:       authService,
 	}
+}
+
+func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get("Authorization")
+		if !strings.HasPrefix(header, "Bearer ") {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		token := strings.TrimPrefix(header, "Bearer ")
+
+		userID, err := s.authService.GetUserIDByToken(r.Context(), token)
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func (s *HTTPServer) StartServer() error {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/add", s.httpFilesHandlers.HandleAddFile).Methods("POST")
-	router.HandleFunc("/get", s.httpFilesHandlers.HandleGetFiles).Methods("GET")
-	router.HandleFunc("/addusr", s.httpUsersHandlers.HandleAddUser).Methods("POST")
+	router.HandleFunc("/register", s.httpUsersHandlers.HandleAddUser).Methods("POST")
+	router.HandleFunc("/login", s.httpUsersHandlers.HandleLogin).Methods("POST")
+
+	protected := router.PathPrefix("/").Subrouter()
+	protected.Use(s.authMiddleware)
+	protected.HandleFunc("/add", s.httpFilesHandlers.HandleAddFile).Methods("POST")
+	protected.HandleFunc("/get", s.httpFilesHandlers.HandleGetFiles).Methods("GET")
 
 	if err := http.ListenAndServe(":9091", router); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {

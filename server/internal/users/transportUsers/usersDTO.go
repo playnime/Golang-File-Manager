@@ -23,3 +23,12 @@ func (t AddUsersDTO) ValidateForCreateUser() error {
 type CreateUserResponseDTO struct {
 	Login string `json:"login"`
 }
+
+type LoginDTO struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
+type LoginResponseDTO struct {
+	Token string `json:"token"`
+}
