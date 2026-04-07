@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"lab2pepe/server/internal/core/domain"
 	"lab2pepe/server/internal/files/transportFiles"
 	"lab2pepe/server/internal/users/transportUsers"
 	"net/http"
@@ -11,10 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 )
-
-type contextKey string
-
-const UserIDKey contextKey = "userID"
 
 type AuthService interface {
 	GetUserIDByToken(ctx context.Context, token string) (int, error)
@@ -55,7 +52,7 @@ func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+		ctx := context.WithValue(r.Context(), domain.UserIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

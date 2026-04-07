@@ -9,14 +9,14 @@ import (
 	"os"
 )
 
-func UploadFile(login string, password string, filename string) (*http.Response, error) {
+func UploadFile(token string, filename string) (*http.Response, error) {
 	//создание "коробки" и структуры чтоб в нее писать
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
 	//далее замена на jwt токен
-	writer.WriteField("Login", login)
-	writer.WriteField("Password", password)
+	//writer.WriteField("Login", login)
+	//writer.WriteField("Password", password)
 
 	//занесение файла в форму
 	f, err := os.Open(filename)
@@ -53,6 +53,7 @@ func UploadFile(login string, password string, filename string) (*http.Response,
 		return nil, err
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer "+token)
 	r, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("error on sending request: ", err)
@@ -65,7 +66,8 @@ func UploadFile(login string, password string, filename string) (*http.Response,
 func main() {
 	// мало ли Илья Клаленик захочет посмотреть что этот клиент делает
 	//просто выполняет один запрос на добавление файла (чтобы запрос выполнился, файл должен лежать возле main.go)
-	r, err := UploadFile("Vanya", "4321", "test2.txt")
+	//если че это токен, можно получить при регистрации
+	r, err := UploadFile("f09b385897fd9d48c04ec3f21af8b4dbae4ceaf33f0a20c110c0e47d82aa019d", "test7.txt")
 	if err != nil {
 		fmt.Println("main: error on qyery: ", err)
 	}

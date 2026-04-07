@@ -47,7 +47,7 @@ func (r *RepoFiles) SaveFile(login string, file multipart.File, filename string)
 	return path, nil
 }
 
-func (r *RepoFiles) SaveMeta(login string, password string, header *multipart.FileHeader) error {
+func (r *RepoFiles) SaveMeta(ctx context.Context, login string, header *multipart.FileHeader) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -56,9 +56,9 @@ func (r *RepoFiles) SaveMeta(login string, password string, header *multipart.Fi
 
 	_, err := r.pool.Exec(ctx,
 		`INSERT INTO files (user_id, file_name, path, size_bytes, mime_type, gd)
-         SELECT id, $3, $4, $5, $6, $7 FROM users
-         WHERE login = $1 AND password = $2`,
-		login, password, header.Filename, path, header.Size, header.Header.Get("Content-Type"), 3,
+         SELECT id, $2, $3, $4, $5, $6 FROM users
+         WHERE login = $1`,
+		login, header.Filename, path, header.Size, header.Header.Get("Content-Type"), 3,
 	)
 	if err != nil {
 		fmt.Println("Error on query: ", err)
@@ -94,4 +94,19 @@ func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error
 	}
 
 	return files, nil
+}
+
+func (r *RepoFiles) GetLoginById(ctx context.Context, id int) (string, error) {
+	var login string
+	err := r.pool.QueryRow(ctx,
+		`SELECT login FROM users WHERE id = $1`,
+		id,
+	).Scan(&login)
+	if err != nil {
+		fmt.Println("didn1t found user with that id: ", err)
+		return "", err
+	}
+	fmt.Println("repo: login: ", login)
+
+	return login, nil
 }

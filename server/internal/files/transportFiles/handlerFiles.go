@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"lab2pepe/server/internal/core/domain"
 	"lab2pepe/server/internal/core/httpUtils"
 	"lab2pepe/server/internal/files/serviceFiles"
 	"net/http"
@@ -27,11 +28,6 @@ func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	login := r.FormValue("Login")
-	password := r.FormValue("Password")
-
-	fmt.Println("login: ", login, ", password: ", password)
-
 	file, header, err := r.FormFile("File")
 	if err != nil {
 		fmt.Println("error on parsing file: ", err)
@@ -40,11 +36,20 @@ func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	id := r.Context().Value(domain.UserIDKey).(int)
+	login, err := h.ServiceFiles.GetLoginById(r.Context(), int(id))
+	if err != nil {
+		fmt.Println("handler: error on founding login: ", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("login: ", login)
 	fmt.Println("Filename: ", header.Filename)
 	fmt.Println("Filesize: ", header.Size)
 	fmt.Println("mime: ", header.Header.Get("Content-Type"))
 
-	err = h.ServiceFiles.AddFile(login, password, file, header)
+	err = h.ServiceFiles.AddFile(r.Context(), login, file, header)
 	if err != nil {
 		fmt.Println("error on creating qyery in database")
 		httpUtils.WriteError(w, err, http.StatusInternalServerError)
