@@ -1,6 +1,7 @@
 package serviceFiles
 
 import (
+	"context"
 	"fmt"
 	repositoryfiles "lab2pepe/server/internal/files/repositoryFiles"
 	"mime/multipart"
@@ -16,14 +17,14 @@ func NewServiceFiles(repoFiles *repositoryfiles.RepoFiles) *ServiceFiles {
 	}
 }
 
-func (s *ServiceFiles) AddFile(login string, password string, file multipart.File, header *multipart.FileHeader) error {
+func (s *ServiceFiles) AddFile(ctx context.Context, login string, file multipart.File, header *multipart.FileHeader) error {
 	path, err := s.RepoFiles.SaveFile(login, file, header.Filename)
 	if err != nil {
 		fmt.Println("error on SaveFile: ", err)
 		return err
 	}
 	_ = path
-	err = s.RepoFiles.SaveMeta(login, password, header)
+	err = s.RepoFiles.SaveMeta(ctx, login, header)
 	if err != nil {
 		fmt.Println("error on SaveMeta: ", err)
 		return err
@@ -33,4 +34,8 @@ func (s *ServiceFiles) AddFile(login string, password string, file multipart.Fil
 
 func (s *ServiceFiles) ServiceGetFiles(login string, password string) ([]string, error) {
 	return s.RepoFiles.RepoGetFiles(login, password)
+}
+
+func (s *ServiceFiles) GetLoginById(ctx context.Context, id int) (string, error) {
+	return s.RepoFiles.GetLoginById(ctx, id)
 }
