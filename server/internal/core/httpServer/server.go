@@ -3,6 +3,7 @@ package httpServer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"lab2pepe/server/internal/files/transportFiles"
 	"lab2pepe/server/internal/users/transportUsers"
 	"net/http"
@@ -41,13 +42,15 @@ func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if !strings.HasPrefix(header, "Bearer ") {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			fmt.Println("unauthorized, no prefix")
+			http.Error(w, "unauthorized, no prefix", http.StatusUnauthorized)
 			return
 		}
 		token := strings.TrimPrefix(header, "Bearer ")
 
 		userID, err := s.authService.GetUserIDByToken(r.Context(), token)
 		if err != nil {
+			fmt.Println("unauthorized: ", err)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
