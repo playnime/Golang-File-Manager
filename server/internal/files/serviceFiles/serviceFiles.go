@@ -32,8 +32,8 @@ func (s *ServiceFiles) AddFile(ctx context.Context, login string, file multipart
 	return nil
 }
 
-func (s *ServiceFiles) ServiceGetFiles(login string, password string) ([]string, error) {
-	return s.RepoFiles.RepoGetFiles(login, password)
+func (s *ServiceFiles) ServiceGetFiles(ctx context.Context, login string) ([]string, error) {
+	return s.RepoFiles.RepoGetFiles(ctx, login)
 }
 
 func (s *ServiceFiles) GetLoginById(ctx context.Context, id int) (string, error) {

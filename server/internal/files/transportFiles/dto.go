@@ -12,5 +12,5 @@ type GetFilesDTO struct {
 }
 
 type GetFilesResponseDTO struct {
-	Files []string
+	Files []string `json:"Files"`
 }

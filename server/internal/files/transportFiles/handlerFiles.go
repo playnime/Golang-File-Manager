@@ -2,8 +2,8 @@ package transportFiles
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
 	"lab2pepe/server/internal/core/domain"
 	"lab2pepe/server/internal/core/httpUtils"
 	"lab2pepe/server/internal/files/serviceFiles"
@@ -60,6 +60,33 @@ func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
+	id, ok := r.Context().Value(domain.UserIDKey).(int)
+	if !ok {
+		httpUtils.WriteError(w, errors.New("unauthorized"), http.StatusUnauthorized)
+		return
+	}
+
+	login, err := h.ServiceFiles.GetLoginById(r.Context(), id)
+	if err != nil {
+		fmt.Println("error on getting login by id:", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	files, err := h.ServiceFiles.ServiceGetFiles(r.Context(), login)
+	if err != nil {
+		fmt.Println("handler: error:", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(GetFilesResponseDTO{Files: files}); err != nil {
+		fmt.Println("handler: encode error:", err)
+	}
+}
+
+/*func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
 	httpResonce, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println("error on reading body: ", err)
@@ -102,3 +129,4 @@ func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("User gets files")
 }
+*/

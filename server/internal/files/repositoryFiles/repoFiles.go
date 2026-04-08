@@ -69,6 +69,36 @@ func (r *RepoFiles) SaveMeta(ctx context.Context, login string, header *multipar
 	return nil
 }
 
+func (r *RepoFiles) RepoGetFiles(ctx context.Context, login string) ([]string, error) {
+	files := make([]string, 0)
+
+	rows, err := r.pool.Query(ctx, `
+        SELECT f.file_name 
+        FROM files f
+        JOIN users u ON u.id = f.user_id
+        WHERE u.login = $1
+    `, login)
+	if err != nil {
+		return nil, fmt.Errorf("RepoGetFiles query: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var filename string
+		if err := rows.Scan(&filename); err != nil {
+			return nil, fmt.Errorf("RepoGetFiles scan: %w", err)
+		}
+		files = append(files, filename)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("RepoGetFiles rows: %w", err)
+	}
+
+	return files, nil
+}
+
+/*
 func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -94,7 +124,7 @@ func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error
 	}
 
 	return files, nil
-}
+}*/
 
 func (r *RepoFiles) GetLoginById(ctx context.Context, id int) (string, error) {
 	var login string
