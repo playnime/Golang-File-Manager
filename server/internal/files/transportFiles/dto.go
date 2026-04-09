@@ -16,3 +16,7 @@ type GetFilesDTO struct {
 type GetFilesResponseDTO struct {
 	Files []domain.GetFilesModel `json:"Files"`
 }
+
+type DeleteFilesDTO struct {
+	Filename string `json:"Filename"`
+}

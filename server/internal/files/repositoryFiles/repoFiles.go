@@ -2,6 +2,7 @@ package repositoryfiles
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"lab2pepe/server/internal/core/domain"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -115,4 +117,48 @@ func (r *RepoFiles) GetLoginById(ctx context.Context, id int) (string, error) {
 	fmt.Println("repo: login: ", login)
 
 	return login, nil
+}
+
+func (r *RepoFiles) RepoDeleteFiles(ctx context.Context, user_id int, filename string) error {
+	var f DeleteModel
+
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, file_name, path, gd
+		FROM files
+		WHERE user_id = $1 AND file_name = $2`,
+		user_id, filename,
+	).Scan(&f.id, &f.filename, &f.filepath, &f.gd)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			fmt.Println("file not found")
+		} else {
+			fmt.Println("error on selecting fileMeta: ", err)
+		}
+		return err
+	}
+
+	if f.gd != 3 && f.gd != 1 {
+		fmt.Println("You dont have permission")
+		return errors.New("You dont have permission")
+	}
+
+	err = os.Remove("out/" + f.filepath)
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Println("error on deleting file on disk: ", err)
+		return err
+	}
+
+	_, err = r.pool.Exec(
+		ctx,
+		`DELETE FROM files
+		WHERE id = $1`,
+		f.id,
+	)
+	if err != nil {
+		fmt.Println("error on deleting meta: ", err)
+		return err
+	}
+
+	fmt.Println("deleting is correct!")
+	return nil
 }

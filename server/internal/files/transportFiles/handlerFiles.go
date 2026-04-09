@@ -8,6 +8,7 @@ import (
 	"lab2pepe/server/internal/core/httpUtils"
 	"lab2pepe/server/internal/files/serviceFiles"
 	"net/http"
+	"strings"
 )
 
 type HandlersFiles struct {
@@ -77,4 +78,37 @@ func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
 	if err = json.NewEncoder(w).Encode(GetFilesResponseDTO{Files: files}); err != nil {
 		fmt.Println("handler: encode error:", err)
 	}
+}
+
+func (h *HandlersFiles) HandleDeleteFiles(w http.ResponseWriter, r *http.Request) {
+	id, ok := r.Context().Value(domain.UserIDKey).(int)
+	if !ok {
+		httpUtils.WriteError(w, errors.New("unauthorized"), http.StatusUnauthorized)
+		return
+	}
+
+	var f DeleteFilesDTO
+	err := json.NewDecoder(r.Body).Decode(&f)
+	if err != nil {
+		fmt.Println("error on decodong json body: ", err)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = h.ServiceFiles.ServiceDelete(r.Context(), id, f.Filename)
+	if err != nil {
+		fmt.Println("handler: error on deleting: ", err)
+		switch {
+		case strings.Contains(err.Error(), "file not found"):
+			httpUtils.WriteError(w, err, http.StatusNotFound)
+		case strings.Contains(err.Error(), "no permission"):
+			httpUtils.WriteError(w, err, http.StatusForbidden)
+		default:
+			httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	//w.Write([]byte("file is deleted"))
 }
