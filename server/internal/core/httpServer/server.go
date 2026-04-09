@@ -67,6 +67,7 @@ func (s *HTTPServer) StartServer() error {
 	protected.Use(s.authMiddleware)
 	protected.HandleFunc("/add", s.httpFilesHandlers.HandleAddFile).Methods("POST")
 	protected.HandleFunc("/get", s.httpFilesHandlers.HandleGetFiles).Methods("GET")
+	protected.HandleFunc("/delete", s.httpFilesHandlers.HandleDeleteFiles).Methods("DELETE")
 
 	if err := http.ListenAndServe(":9091", router); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {

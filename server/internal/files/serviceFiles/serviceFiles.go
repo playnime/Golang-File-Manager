@@ -40,3 +40,7 @@ func (s *ServiceFiles) ServiceGetFiles(ctx context.Context, id int) ([]domain.Ge
 func (s *ServiceFiles) GetLoginById(ctx context.Context, id int) (string, error) {
 	return s.RepoFiles.GetLoginById(ctx, id)
 }
+
+func (s *ServiceFiles) ServiceDelete(ctx context.Context, id int, filename string) error {
+	return s.RepoFiles.RepoDeleteFiles(ctx, id, filename)
+}
