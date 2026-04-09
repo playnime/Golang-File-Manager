@@ -66,14 +66,7 @@ func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	login, err := h.ServiceFiles.GetLoginById(r.Context(), id)
-	if err != nil {
-		fmt.Println("error on getting login by id:", err)
-		httpUtils.WriteError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	files, err := h.ServiceFiles.ServiceGetFiles(r.Context(), login)
+	files, err := h.ServiceFiles.ServiceGetFiles(r.Context(), id)
 	if err != nil {
 		fmt.Println("handler: error:", err)
 		httpUtils.WriteError(w, err, http.StatusInternalServerError)
@@ -85,48 +78,3 @@ func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("handler: encode error:", err)
 	}
 }
-
-/*func (h *HandlersFiles) HandleGetFiles(w http.ResponseWriter, r *http.Request) {
-	httpResonce, err := io.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println("error on reading body: ", err)
-		//w.WriteHeader(http.StatusInternalServerError)
-		httpUtils.WriteError(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	var User GetFilesDTO
-
-	err = json.Unmarshal(httpResonce, &User)
-	if err != nil {
-		fmt.Println("error on unmarshalling response body: ", err)
-		httpUtils.WriteError(w, err, http.StatusBadRequest)
-		return
-	}
-
-	files, err := h.ServiceFiles.ServiceGetFiles(User.Login, User.Password)
-	if err != nil {
-		fmt.Println("error on getting files: ", err)
-		httpUtils.WriteError(w, err, http.StatusBadRequest)
-		return
-	}
-
-	response := GetFilesResponseDTO{
-		Files: files,
-	}
-
-	b, err := json.Marshal(response)
-	if err != nil {
-		fmt.Println("error on marshaling http answer: ", err)
-		httpUtils.WriteError(w, err, http.StatusInternalServerError)
-		return
-	}
-	_, err = w.Write(b)
-	if err != nil {
-		fmt.Println("error on write http answer: ", err)
-		return
-	}
-
-	fmt.Println("User gets files")
-}
-*/

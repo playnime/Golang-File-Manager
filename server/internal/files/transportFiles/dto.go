@@ -1,5 +1,7 @@
 package transportFiles
 
+import "lab2pepe/server/internal/core/domain"
+
 type AddFileDTO struct {
 	Login    string `json:"Login"`
 	Password string `json:"Password"`
@@ -12,5 +14,5 @@ type GetFilesDTO struct {
 }
 
 type GetFilesResponseDTO struct {
-	Files []string `json:"Files"`
+	Files []domain.GetFilesModel `json:"Files"`
 }
