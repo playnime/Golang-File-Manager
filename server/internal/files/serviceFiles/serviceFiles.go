@@ -3,6 +3,7 @@ package serviceFiles
 import (
 	"context"
 	"fmt"
+	"lab2pepe/server/internal/core/domain"
 	repositoryfiles "lab2pepe/server/internal/files/repositoryFiles"
 	"mime/multipart"
 )
@@ -32,8 +33,8 @@ func (s *ServiceFiles) AddFile(ctx context.Context, login string, file multipart
 	return nil
 }
 
-func (s *ServiceFiles) ServiceGetFiles(login string, password string) ([]string, error) {
-	return s.RepoFiles.RepoGetFiles(login, password)
+func (s *ServiceFiles) ServiceGetFiles(ctx context.Context, id int) ([]domain.GetFilesModel, error) {
+	return s.RepoFiles.RepoGetFiles(ctx, id)
 }
 
 func (s *ServiceFiles) GetLoginById(ctx context.Context, id int) (string, error) {

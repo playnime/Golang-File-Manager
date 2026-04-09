@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"lab2pepe/server/internal/core/domain"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -69,30 +70,35 @@ func (r *RepoFiles) SaveMeta(ctx context.Context, login string, header *multipar
 	return nil
 }
 
-func (r *RepoFiles) RepoGetFiles(login string, password string) ([]string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+func (r *RepoFiles) RepoGetFiles(ctx context.Context, id int) ([]domain.GetFilesModel, error) {
+	files := make([]domain.GetFilesModel, 0)
 	rows, err := r.pool.Query(ctx,
-		`SELECT f.file_name FROM files f
-         JOIN users u ON u.id = f.user_id
-         WHERE u.login = $1 AND u.password = $2`,
-		login, password,
+		`SELECT file_name, size_bytes, gd, uploaded_at
+		FROM files
+		WHERE user_id = $1`,
+		id,
 	)
+
 	if err != nil {
-		return nil, fmt.Errorf("repoFiles.RepoGetFiles: %w", err)
+		fmt.Println("repo: err on getting rows: ", err)
+		return nil, err
 	}
+
 	defer rows.Close()
 
-	var files []string
+	var file domain.GetFilesModel
+
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return nil, fmt.Errorf("repoFiles.RepoGetFiles scan: %w", err)
+		err := rows.Scan(&file.FileName, &file.SizeBytes, &file.Gd, &file.UploadedAt)
+		if err != nil {
+			fmt.Println("repo: error on scanning rows: ", err)
+			return nil, err
 		}
-		files = append(files, name)
+
+		files = append(files, file)
 	}
 
+	fmt.Println("client getting files")
 	return files, nil
 }
 
