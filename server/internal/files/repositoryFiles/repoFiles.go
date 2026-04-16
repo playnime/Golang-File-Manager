@@ -119,14 +119,14 @@ func (r *RepoFiles) GetLoginById(ctx context.Context, id int) (string, error) {
 	return login, nil
 }
 
-func (r *RepoFiles) RepoDeleteFiles(ctx context.Context, user_id int, filename string) error {
+func (r *RepoFiles) RepoDeleteFiles(ctx context.Context, user_id int, filename string, author string) error {
 	var f DeleteModel
 
 	err := r.pool.QueryRow(ctx,
 		`SELECT id, file_name, path, gd
 		FROM files
-		WHERE user_id = $1 AND file_name = $2`,
-		user_id, filename,
+		WHERE user_id = $1 AND file_name = $2 AND path = $3`,
+		user_id, filename, author+"/"+filename,
 	).Scan(&f.id, &f.filename, &f.filepath, &f.gd)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -142,20 +142,24 @@ func (r *RepoFiles) RepoDeleteFiles(ctx context.Context, user_id int, filename s
 		return errors.New("You dont have permission")
 	}
 
-	err = os.Remove("out/" + f.filepath)
-	if err != nil && !os.IsNotExist(err) {
-		fmt.Println("error on deleting file on disk: ", err)
-		return err
-	}
-
 	_, err = r.pool.Exec(
 		ctx,
 		`DELETE FROM files
-		WHERE id = $1`,
-		f.id,
+		WHERE path = $1`,
+		f.filepath,
 	)
 	if err != nil {
 		fmt.Println("error on deleting meta: ", err)
+		return err
+	}
+
+	if !filepath.IsLocal(f.filepath) {
+		return fmt.Errorf("invalid file path")
+	}
+
+	err = os.Remove("out/" + f.filepath)
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Println("error on deleting file on disk: ", err)
 		return err
 	}
 

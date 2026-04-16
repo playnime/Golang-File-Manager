@@ -95,7 +95,7 @@ func (h *HandlersFiles) HandleDeleteFiles(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = h.ServiceFiles.ServiceDelete(r.Context(), id, f.Filename)
+	err = h.ServiceFiles.ServiceDelete(r.Context(), id, f.Filename, f.Author)
 	if err != nil {
 		fmt.Println("handler: error on deleting: ", err)
 		switch {
