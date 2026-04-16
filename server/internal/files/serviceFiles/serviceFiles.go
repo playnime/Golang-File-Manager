@@ -41,6 +41,6 @@ func (s *ServiceFiles) GetLoginById(ctx context.Context, id int) (string, error)
 	return s.RepoFiles.GetLoginById(ctx, id)
 }
 
-func (s *ServiceFiles) ServiceDelete(ctx context.Context, id int, filename string) error {
-	return s.RepoFiles.RepoDeleteFiles(ctx, id, filename)
+func (s *ServiceFiles) ServiceDelete(ctx context.Context, id int, filename string, author string) error {
+	return s.RepoFiles.RepoDeleteFiles(ctx, id, filename, author)
 }
