@@ -166,3 +166,35 @@ func (r *RepoFiles) RepoDeleteFiles(ctx context.Context, user_id int, filename s
 	fmt.Println("deleting is correct!")
 	return nil
 }
+
+func (r *RepoFiles) RepoDownloadFile(ctx context.Context, user_id int, filename string, author string) (io.ReadCloser, error) {
+	var f DownloadModel
+
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, file_name, path, gd
+		FROM files
+		WHERE user_id = $1 AND file_name = $2 AND path = $3`,
+		user_id, filename, author+"/"+filename,
+	).Scan(&f.id, &f.filename, &f.filepath, &f.gd)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			fmt.Println("file not found")
+		} else {
+			fmt.Println("error on selecting fileMeta: ", err)
+		}
+		return nil, err
+	}
+
+	if f.gd != 3 && f.gd != 2 {
+		fmt.Println("You dont have permission")
+		return nil, errors.New("You dont have permission")
+	}
+
+	file, err := os.Open("out/" + f.filepath)
+	if err != nil {
+		fmt.Println("error on opening file: ", err)
+		return nil, err
+	}
+
+	return file, nil
+}

@@ -21,3 +21,8 @@ type DeleteFilesDTO struct {
 	Filename string `json:"Filename"`
 	Author   string `json:"Author"`
 }
+
+type DownloadFileDTO struct {
+	Filename string `json:"Filename"`
+	Author   string `json:"Author"`
+}
