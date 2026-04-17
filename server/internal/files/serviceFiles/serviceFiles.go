@@ -3,6 +3,7 @@ package serviceFiles
 import (
 	"context"
 	"fmt"
+	"io"
 	"lab2pepe/server/internal/core/domain"
 	repositoryfiles "lab2pepe/server/internal/files/repositoryFiles"
 	"mime/multipart"
@@ -43,4 +44,8 @@ func (s *ServiceFiles) GetLoginById(ctx context.Context, id int) (string, error)
 
 func (s *ServiceFiles) ServiceDelete(ctx context.Context, id int, filename string, author string) error {
 	return s.RepoFiles.RepoDeleteFiles(ctx, id, filename, author)
+}
+
+func (s *ServiceFiles) ServiceDownload(ctx context.Context, user_id int, filename string, author string) (io.ReadCloser, error) {
+	return s.RepoFiles.RepoDownloadFile(ctx, user_id, filename, author)
 }

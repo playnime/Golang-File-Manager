@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"lab2pepe/server/internal/core/domain"
 	"lab2pepe/server/internal/core/httpUtils"
 	"lab2pepe/server/internal/files/serviceFiles"
+	"mime/multipart"
 	"net/http"
 	"strings"
 )
@@ -111,4 +113,46 @@ func (h *HandlersFiles) HandleDeleteFiles(w http.ResponseWriter, r *http.Request
 
 	w.WriteHeader(http.StatusNoContent)
 	//w.Write([]byte("file is deleted"))
+}
+
+func (h *HandlersFiles) HandleGetFile(w http.ResponseWriter, r *http.Request) {
+	id, ok := r.Context().Value(domain.UserIDKey).(int)
+	if !ok {
+		httpUtils.WriteError(w, errors.New("unauthorized"), http.StatusUnauthorized)
+		return
+	}
+
+	var f DownloadFileDTO
+	err := json.NewDecoder(r.Body).Decode(&f)
+	if err != nil {
+		fmt.Println("error on decodong json body: ", err)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+
+	file, err := h.ServiceFiles.ServiceDownload(r.Context(), id, f.Filename, f.Author)
+	if err != nil {
+		fmt.Println("handler: error on serviceDownload: ", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	multipartWriter := multipart.NewWriter(w)
+	defer multipartWriter.Close()
+
+	w.Header().Set("Content-Type", multipartWriter.FormDataContentType())
+	w.WriteHeader(http.StatusOK)
+
+	part, err := multipartWriter.CreateFormFile("file", f.Filename)
+	if err != nil {
+		fmt.Println("error on creating part for file: ", err)
+		return
+	}
+
+	_, err = io.Copy(part, file)
+	if err != nil {
+		fmt.Println("error on copying file in part: ", err)
+		return
+	}
 }
