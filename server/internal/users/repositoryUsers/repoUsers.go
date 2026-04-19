@@ -2,11 +2,8 @@ package repositoryUsers
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"lab2pepe/server/internal/core/md5MY"
-
-	crypto_rand "crypto/rand"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -36,44 +33,39 @@ func (r *RepoUsers) CreateUser(ctx context.Context, login, password string) erro
 	return nil
 }
 
-func (r *RepoUsers) Login(ctx context.Context, login, password string) (string, error) {
+// Только проверяет логин/пароль, возвращает userID
+func (r *RepoUsers) GetUserByCredentials(ctx context.Context, login, password string) (int, error) {
 	hash := md5MY.HashToString(md5MY.HASH([]byte(password)))
 
-	_, err := r.Pool.Exec(ctx,
-		`DELETE FROM sessions WHERE expires_at < NOW()`,
-	)
-	if err != nil {
-		return "", fmt.Errorf("repoUsers.Login: clear sessions: %w", err)
-	}
-
 	var userID int
-	err = r.Pool.QueryRow(ctx,
+	err := r.Pool.QueryRow(ctx,
 		`SELECT id FROM users WHERE login = $1 AND password = $2`,
 		login, hash,
 	).Scan(&userID)
 	if err != nil {
-		return "", fmt.Errorf("repoUsers.Login: %w", err)
+		return 0, fmt.Errorf("repoUsers.GetUserByCredentials: %w", err)
 	}
+	return userID, nil
+}
 
-	// генерируем токен
-	b := make([]byte, 32)
-	if _, err := crypto_rand.Read(b); err != nil {
-		return "", fmt.Errorf("repoUsers.Login: generate token: %w", err)
-	}
-	token := hex.EncodeToString(b)
-
-	_, err = r.Pool.Exec(ctx,
-		`INSERT 
-		INTO sessions (user_id, token, expires_at)
-        VALUES ($1, $2, NOW() + INTERVAL '5 minute')`,
-		userID,
-		token,
+// Только сохраняет сессию
+func (r *RepoUsers) SaveSession(ctx context.Context, userID int, token string) error {
+	_, err := r.Pool.Exec(ctx,
+		`DELETE FROM sessions WHERE expires_at < NOW()`,
 	)
 	if err != nil {
-		return "", fmt.Errorf("repoUsers.Login: save session: %w", err)
+		return fmt.Errorf("repoUsers.SaveSession: clear sessions: %w", err)
 	}
-	fmt.Println("User authorized:", login)
-	return token, nil
+
+	_, err = r.Pool.Exec(ctx,
+		`INSERT INTO sessions (user_id, token, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '5 minute')`,
+		userID, token,
+	)
+	if err != nil {
+		return fmt.Errorf("repoUsers.SaveSession: %w", err)
+	}
+	return nil
 }
 
 func (r *RepoUsers) GetUserIDByToken(ctx context.Context, token string) (int, error) {
