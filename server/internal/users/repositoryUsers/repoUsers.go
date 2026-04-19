@@ -32,14 +32,22 @@ func (r *RepoUsers) CreateUser(ctx context.Context, login, password string) erro
 	if err != nil {
 		return fmt.Errorf("repoUsers.CreateUser: %w", err)
 	}
+	fmt.Println("User created:", login)
 	return nil
 }
 
 func (r *RepoUsers) Login(ctx context.Context, login, password string) (string, error) {
 	hash := md5MY.HashToString(md5MY.HASH([]byte(password)))
 
+	_, err := r.Pool.Exec(ctx,
+		`DELETE FROM sessions WHERE expires_at < NOW()`,
+	)
+	if err != nil {
+		return "", fmt.Errorf("repoUsers.Login: clear sessions: %w", err)
+	}
+
 	var userID int
-	err := r.Pool.QueryRow(ctx,
+	err = r.Pool.QueryRow(ctx,
 		`SELECT id FROM users WHERE login = $1 AND password = $2`,
 		login, hash,
 	).Scan(&userID)
@@ -49,20 +57,22 @@ func (r *RepoUsers) Login(ctx context.Context, login, password string) (string, 
 
 	// генерируем токен
 	b := make([]byte, 32)
-	crypto_rand.Read(b)
+	if _, err := crypto_rand.Read(b); err != nil {
+		return "", fmt.Errorf("repoUsers.Login: generate token: %w", err)
+	}
 	token := hex.EncodeToString(b)
 
 	_, err = r.Pool.Exec(ctx,
 		`INSERT 
 		INTO sessions (user_id, token, expires_at)
-        VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
+        VALUES ($1, $2, NOW() + INTERVAL '5 minute')`,
 		userID,
 		token,
 	)
 	if err != nil {
 		return "", fmt.Errorf("repoUsers.Login: save session: %w", err)
 	}
-
+	fmt.Println("User authorized:", login)
 	return token, nil
 }
 
