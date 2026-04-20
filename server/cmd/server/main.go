@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"lab2pepe/server/internal/core/db"
 	"lab2pepe/server/internal/core/domain"
 	"lab2pepe/server/internal/core/httpServer"
 	repositoryfiles "lab2pepe/server/internal/files/repositoryFiles"
@@ -29,6 +31,10 @@ func main() {
 		panic(err)
 	}
 	defer Pool.Close()
+	if err := db.AutoMigrate(ctx, Pool); err != nil {
+		fmt.Println("migration error:", err)
+		os.Exit(1)
+	}
 
 	RepoFiles := repositoryfiles.NewHRepoFiles(Pool)
 	ServiceFiles := serviceFiles.NewServiceFiles(RepoFiles)
