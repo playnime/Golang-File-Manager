@@ -3,6 +3,7 @@ package transportUsers
 import (
 	"encoding/json"
 	"fmt"
+	"lab2pepe/server/internal/core/domain"
 	"lab2pepe/server/internal/core/httpUtils"
 	"lab2pepe/server/internal/users/serviceUsers"
 	"net/http"
@@ -17,7 +18,6 @@ func NewHandlersUser(service *serviceUsers.ServiceUsers) *HandlersUsers {
 }
 
 func (h *HandlersUsers) HandleAddUser(w http.ResponseWriter, r *http.Request) {
-
 	var dto AddUsersDTO
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
@@ -27,29 +27,18 @@ func (h *HandlersUsers) HandleAddUser(w http.ResponseWriter, r *http.Request) {
 		httpUtils.WriteError(w, err, http.StatusBadRequest)
 		return
 	}
-
-	ctx := r.Context()
-
-	if err := h.ServiceFiles.AddUsers(ctx, dto.Login, dto.Password); err != nil {
+	if err := h.ServiceFiles.AddUsers(r.Context(), dto.Login, dto.Password); err != nil {
 		httpUtils.WriteError(w, err, http.StatusConflict)
 		return
 	}
-
-	response := CreateUserResponseDTO{
-		Login: dto.Login,
-	}
-
-	b, err := json.MarshalIndent(response, "", "    ")
-
+	b, err := json.MarshalIndent(CreateUserResponseDTO{Login: dto.Login}, "", "    ")
 	if err != nil {
 		panic(err)
 	}
 	w.WriteHeader(http.StatusCreated)
 	if _, err := w.Write(b); err != nil {
 		fmt.Println("failed to write http response:", err)
-		return
 	}
-
 }
 
 func (h *HandlersUsers) HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -58,16 +47,98 @@ func (h *HandlersUsers) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-
-	token, err := h.ServiceFiles.Login(r.Context(), dto.Login, dto.Password)
+	result, err := h.ServiceFiles.Login(r.Context(), dto.Login, dto.Password)
 	if err != nil {
 		httpUtils.WriteError(w, err, http.StatusUnauthorized)
 		return
 	}
-
-	b, _ := json.Marshal(LoginResponseDTO{
-		Token: token,
-	})
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(b)
+	json.NewEncoder(w).Encode(LoginResponseDTO{
+		Token:      result.Token,
+		TmpToken:   result.TmpToken,
+		Require2FA: result.Require2FA,
+	})
+}
+
+func (h *HandlersUsers) HandleLogin2FA(w http.ResponseWriter, r *http.Request) {
+	var dto Login2FADTO
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+	token, err := h.ServiceFiles.LoginConfirm2FA(r.Context(), dto.TmpToken, dto.Code)
+	if err != nil {
+		fmt.Println("HandleLogin2FA error:", err)
+		httpUtils.WriteError(w, err, http.StatusUnauthorized)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(LoginResponseDTO{Token: token})
+}
+
+func (h *HandlersUsers) HandleSetup2FA(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(domain.UserIDKey).(int)
+	if !ok {
+		httpUtils.WriteError(w, fmt.Errorf("unauthorized"), http.StatusUnauthorized)
+		return
+	}
+	login, err := h.ServiceFiles.GetLoginByID(r.Context(), userID)
+	if err != nil {
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+	otpauthURL, secret, err := h.ServiceFiles.Setup2FA(r.Context(), userID, login)
+	if err != nil {
+		fmt.Println("HandleSetup2FA error:", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(Setup2FAResponseDTO{
+		OtpauthURL: otpauthURL,
+		Secret:     secret,
+	})
+}
+
+func (h *HandlersUsers) HandleConfirm2FA(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(domain.UserIDKey).(int)
+	if !ok {
+		httpUtils.WriteError(w, fmt.Errorf("unauthorized"), http.StatusUnauthorized)
+		return
+	}
+	var dto Confirm2FADTO
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+	if err := h.ServiceFiles.Confirm2FA(r.Context(), userID, dto.Code); err != nil {
+		fmt.Println("HandleConfirm2FA error:", err)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"2fa enabled"}`))
+}
+
+func (h *HandlersUsers) HandleDelete2FA(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(domain.UserIDKey).(int)
+	if !ok {
+		httpUtils.WriteError(w, fmt.Errorf("unauthorized"), http.StatusUnauthorized)
+		return
+	}
+	var dto Delete2FADTO
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+	if err := h.ServiceFiles.Delete2FA(r.Context(), userID, dto.Code); err != nil {
+		fmt.Println("HandleDelete2FA error:", err)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"2fa disabled"}`))
 }

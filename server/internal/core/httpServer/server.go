@@ -47,7 +47,7 @@ func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
 
 		userID, err := s.authService.GetUserIDByToken(r.Context(), token)
 		if err != nil {
-			fmt.Println("unauthorized: ", err)
+			fmt.Println("unauthorized:", err)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -59,16 +59,21 @@ func (s *HTTPServer) authMiddleware(next http.Handler) http.Handler {
 
 func (s *HTTPServer) StartServer() error {
 	router := mux.NewRouter()
-
+	//pub
 	router.HandleFunc("/register", s.httpUsersHandlers.HandleAddUser).Methods("POST")
 	router.HandleFunc("/login", s.httpUsersHandlers.HandleLogin).Methods("POST")
+	router.HandleFunc("/login/2fa", s.httpUsersHandlers.HandleLogin2FA).Methods("POST")
 
+	//protected
 	protected := router.PathPrefix("/").Subrouter()
 	protected.Use(s.authMiddleware)
 	protected.HandleFunc("/add", s.httpFilesHandlers.HandleAddFile).Methods("POST")
 	protected.HandleFunc("/get", s.httpFilesHandlers.HandleGetFiles).Methods("GET")
 	protected.HandleFunc("/delete", s.httpFilesHandlers.HandleDeleteFiles).Methods("DELETE")
 	protected.HandleFunc("/getfile", s.httpFilesHandlers.HandleGetFile).Methods("GET")
+	protected.HandleFunc("/2fa/setup", s.httpUsersHandlers.HandleSetup2FA).Methods("GET")
+	protected.HandleFunc("/2fa/confirm", s.httpUsersHandlers.HandleConfirm2FA).Methods("POST")
+	protected.HandleFunc("/2fa", s.httpUsersHandlers.HandleDelete2FA).Methods("DELETE")
 
 	if err := http.ListenAndServe(":9091", router); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {
