@@ -38,7 +38,7 @@ func checkOnPrime(n *big.Int) bool {
 		}
 	}
 
-	return nbig.ProbablyPrime(20)
+	return MillerRabin(20, nbig)
 }
 
 func generatePQ() (*big.Int, *big.Int, *big.Int, *big.Int) {
