@@ -235,16 +235,15 @@ func (r *RepoFiles) RepoGiveRights(ctx context.Context, authorID int, filename s
 }
 
 func (r *RepoFiles) GetAESKeyByUserID(ctx context.Context, userID int) ([]byte, error) {
-	return []byte("1234567890123456"), nil
-	/*var aesKey []byte
-		err := r.pool.QueryRow(ctx, `
+	var aesKey []byte
+	err := r.pool.QueryRow(ctx, `
 	        SELECT aes_key FROM sessions
 	        WHERE user_id = $1 AND expires_at > NOW()
 	        ORDER BY created_at DESC
 	        LIMIT 1
 	    `, userID).Scan(&aesKey)
-		if err != nil {
-			return nil, fmt.Errorf("GetAESKeyByUserID: %w", err)
-		}
-		return aesKey, nil*/
+	if err != nil {
+		return nil, fmt.Errorf("GetAESKeyByUserID: %w", err)
+	}
+	return aesKey, nil
 }

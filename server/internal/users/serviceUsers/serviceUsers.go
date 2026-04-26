@@ -129,3 +129,8 @@ func (s *ServiceUsers) Delete2FA(ctx context.Context, userID int, code string) e
 func (s *ServiceUsers) GetLoginByID(ctx context.Context, userID int) (string, error) {
 	return s.RepoUsers.GetLoginByID(ctx, userID)
 }
+
+// internal/users/service.go
+func (s *ServiceUsers) SaveAESKey(ctx context.Context, userID int, key []byte) error {
+	return s.RepoUsers.UpdateAESKey(ctx, userID, key)
+}

@@ -75,6 +75,7 @@ func (s *HTTPServer) StartServer() error {
 	protected.HandleFunc("/2fa/confirm", s.httpUsersHandlers.HandleConfirm2FA).Methods("POST")
 	protected.HandleFunc("/2fa", s.httpUsersHandlers.HandleDelete2FA).Methods("DELETE")
 	protected.HandleFunc("/gvRights", s.httpFilesHandlers.HandleGiveRights).Methods("POST")
+	protected.HandleFunc("/keys/exchange", s.httpUsersHandlers.HandleKeyExchange).Methods("POST")
 
 	if err := http.ListenAndServe(":9091", router); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {
