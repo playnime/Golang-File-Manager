@@ -2,13 +2,12 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func AutoMigrate(ctx context.Context, pool *pgxpool.Pool) error {
-	query := `
+	/*query := `
 	CREATE TABLE IF NOT EXISTS users (
 		id           SERIAL PRIMARY KEY,
 		login        VARCHAR(20) NOT NULL UNIQUE,
@@ -44,6 +43,6 @@ func AutoMigrate(ctx context.Context, pool *pgxpool.Pool) error {
 		return fmt.Errorf("AutoMigrate: %w", err)
 	}
 
-	fmt.Println("migrations applied successfully")
+	fmt.Println("migrations applied successfully")*/
 	return nil
 }

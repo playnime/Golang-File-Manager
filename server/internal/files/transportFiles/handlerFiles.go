@@ -40,7 +40,7 @@ func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	id := r.Context().Value(domain.UserIDKey).(int)
-	login, err := h.ServiceFiles.GetLoginById(r.Context(), int(id))
+	login, err := h.ServiceFiles.GetLoginById(r.Context(), id)
 	if err != nil {
 		fmt.Println("handler: error on founding login: ", err)
 		httpUtils.WriteError(w, err, http.StatusInternalServerError)
@@ -52,9 +52,17 @@ func (h *HandlersFiles) HandleAddFile(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Filesize: ", header.Size)
 	fmt.Println("mime: ", header.Header.Get("Content-Type"))
 
-	err = h.ServiceFiles.AddFile(r.Context(), login, file, header)
+	// читаем зашифрованные байты
+	encryptedBytes, err := io.ReadAll(file)
 	if err != nil {
-		fmt.Println("error on creating qyery in database")
+		fmt.Println("error on reading file bytes: ", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = h.ServiceFiles.AddFile(r.Context(), login, encryptedBytes, header.Filename)
+	if err != nil {
+		fmt.Println("error on creating query in database: ", err)
 		httpUtils.WriteError(w, err, http.StatusInternalServerError)
 		return
 	}
@@ -125,18 +133,18 @@ func (h *HandlersFiles) HandleGetFile(w http.ResponseWriter, r *http.Request) {
 	var f DownloadFileDTO
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
-		fmt.Println("error on decodong json body: ", err)
+		fmt.Println("error on decoding json body: ", err)
 		httpUtils.WriteError(w, err, http.StatusBadRequest)
 		return
 	}
 
-	file, err := h.ServiceFiles.ServiceDownload(r.Context(), id, f.Filename, f.Author)
+	// получаем зашифрованные байты
+	encryptedBytes, err := h.ServiceFiles.ServiceDownload(r.Context(), id, f.Filename, f.Author)
 	if err != nil {
 		fmt.Println("handler: error on serviceDownload: ", err)
 		httpUtils.WriteError(w, err, http.StatusInternalServerError)
 		return
 	}
-	defer file.Close()
 
 	multipartWriter := multipart.NewWriter(w)
 	defer multipartWriter.Close()
@@ -150,9 +158,10 @@ func (h *HandlersFiles) HandleGetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = io.Copy(part, file)
+	// пишем зашифрованные байты
+	_, err = part.Write(encryptedBytes)
 	if err != nil {
-		fmt.Println("error on copying file in part: ", err)
+		fmt.Println("error on writing encrypted bytes: ", err)
 		return
 	}
 }
