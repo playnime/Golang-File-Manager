@@ -35,13 +35,9 @@ func (s *ServiceFiles) AddFile(ctx context.Context, login string, encryptedBytes
 		return fmt.Errorf("decrypt: %w", err)
 	}
 
-	fmt.Printf("last 16 bytes of decrypted: %x\n", decrypted[len(decrypted)-16:])
-
 	// проверяем хэш
 	fileBytes, err := Aes.VerifyAndStrip(decrypted)
-	fmt.Printf("encryptedBytes len: %d\n", len(encryptedBytes))
-	fmt.Printf("decrypted len: %d\n", len(decrypted))
-	fmt.Printf("fileBytes len: %d\n", len(fileBytes))
+
 	if err != nil {
 		return fmt.Errorf("integrity check: %w", err)
 	}
