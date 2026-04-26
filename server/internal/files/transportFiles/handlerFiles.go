@@ -156,3 +156,31 @@ func (h *HandlersFiles) HandleGetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (h *HandlersFiles) HandleGiveRights(w http.ResponseWriter, r *http.Request) {
+	id, ok := r.Context().Value(domain.UserIDKey).(int)
+	if !ok {
+		fmt.Println("unauthorized")
+		httpUtils.WriteError(w, errors.New("unauthorized"), http.StatusUnauthorized)
+		return
+	}
+
+	var f GiveRightsDTO
+
+	err := json.NewDecoder(r.Body).Decode(&f)
+	if err != nil {
+		fmt.Println("error on decodong json body: ", err)
+		httpUtils.WriteError(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = h.ServiceFiles.ServiceGiveRights(r.Context(), id, f.Filename, f.User, f.Rights)
+	if err != nil {
+		fmt.Println("error on giving rights: ", err)
+		httpUtils.WriteError(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("Rights is giving!")
+	w.Write([]byte("Rights is giving!"))
+}

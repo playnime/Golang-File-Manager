@@ -22,7 +22,7 @@ func AutoMigrate(ctx context.Context, pool *pgxpool.Pool) error {
 		id          SERIAL PRIMARY KEY,
 		user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 		file_name   VARCHAR(255) NOT NULL,
-		path        TEXT NOT NULL UNIQUE,
+		path        TEXT NOT NULL,
 		size_bytes  BIGINT,
 		mime_type   VARCHAR(100),
 		gd          INTEGER DEFAULT 0,

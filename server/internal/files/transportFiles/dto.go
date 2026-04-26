@@ -26,3 +26,9 @@ type DownloadFileDTO struct {
 	Filename string `json:"Filename"`
 	Author   string `json:"Author"`
 }
+
+type GiveRightsDTO struct {
+	Filename string `json:"Filename"`
+	User     string `json:"User"`
+	Rights   int    `json:"Rights"`
+}

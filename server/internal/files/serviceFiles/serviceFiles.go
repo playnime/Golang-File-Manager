@@ -49,3 +49,10 @@ func (s *ServiceFiles) ServiceDelete(ctx context.Context, id int, filename strin
 func (s *ServiceFiles) ServiceDownload(ctx context.Context, user_id int, filename string, author string) (io.ReadCloser, error) {
 	return s.RepoFiles.RepoDownloadFile(ctx, user_id, filename, author)
 }
+
+func (s *ServiceFiles) ServiceGiveRights(ctx context.Context, user_id int, filename string, user string, rights int) error {
+	if !(rights >= 1 && rights <= 3) {
+		return fmt.Errorf("Error because there is not same rights")
+	}
+	return s.RepoFiles.RepoGiveRights(ctx, user_id, filename, user, rights)
+}

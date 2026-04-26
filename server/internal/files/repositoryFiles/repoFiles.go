@@ -198,3 +198,40 @@ func (r *RepoFiles) RepoDownloadFile(ctx context.Context, user_id int, filename 
 
 	return file, nil
 }
+
+func (r *RepoFiles) RepoGiveRights(ctx context.Context, authorID int, filename string, user string, rights int) error {
+	author, err := r.GetLoginById(ctx, authorID)
+	if err != nil {
+		fmt.Println("error on getting login by id: ", err)
+		return fmt.Errorf("error on getting login by id: %w", err)
+	}
+
+	filePath := filepath.Join(author, filename)
+
+	var userID int
+	err = r.pool.QueryRow(ctx,
+		`SELECT id FROM users WHERE login = $1`,
+		user,
+	).Scan(&userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return fmt.Errorf("user not found")
+		}
+		fmt.Println("error on getting user by login: ", err)
+		return fmt.Errorf("error on getting user by login: %w", err)
+	}
+
+	_, err = r.pool.Exec(ctx,
+		`INSERT INTO files (user_id, file_name, path, size_bytes, mime_type, gd)
+        SELECT $1, file_name, path, size_bytes, mime_type, $2
+        FROM files
+        WHERE file_name = $3 AND path = $4`,
+		userID, rights, filename, filePath,
+	)
+	if err != nil {
+		fmt.Println("error on adding meta: ", err)
+		return fmt.Errorf("error on adding meta to database: %w", err)
+	}
+
+	return nil
+}
