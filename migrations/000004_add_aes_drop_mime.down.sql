@@ -1,0 +1,2 @@
+ALTER TABLE sessions DROP COLUMN aes_key;
+ALTER TABLE files ADD COLUMN mime_type VARCHAR(100);

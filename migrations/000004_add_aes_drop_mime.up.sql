@@ -1,0 +1,2 @@
+ALTER TABLE sessions ADD COLUMN aes_key BYTEA NOT NULL DEFAULT '';
+ALTER TABLE files DROP COLUMN mime_type;

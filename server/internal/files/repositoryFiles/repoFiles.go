@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"lab2pepe/server/internal/core/domain"
-	"mime/multipart"
 	"os"
 	"path/filepath"
 	"time"
@@ -25,7 +24,7 @@ func NewHRepoFiles(pool *pgxpool.Pool) *RepoFiles {
 	}
 }
 
-func (r *RepoFiles) SaveFile(login string, file multipart.File, filename string) (string, error) {
+func (r *RepoFiles) SaveFile(login string, fileBytes []byte, filename string) (string, error) {
 	dir := filepath.Join(os.Getenv("UPLOAD_DIR"), login)
 	err := os.MkdirAll(dir, 0755)
 	if err != nil {
@@ -41,27 +40,26 @@ func (r *RepoFiles) SaveFile(login string, file multipart.File, filename string)
 	}
 	defer data.Close()
 
-	_, err = io.Copy(data, file)
+	_, err = data.Write(fileBytes) // ← вместо io.Copy
 	if err != nil {
-		fmt.Println("error on copying file: ", err)
+		fmt.Println("error on writing file: ", err)
 		return "", err
 	}
 
 	return path, nil
 }
 
-func (r *RepoFiles) SaveMeta(ctx context.Context, login string, header *multipart.FileHeader) error {
-
+func (r *RepoFiles) SaveMeta(ctx context.Context, login string, filename string, size int64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	path := filepath.Join(login, header.Filename)
+	path := filepath.Join(login, filename)
 
 	_, err := r.pool.Exec(ctx,
-		`INSERT INTO files (user_id, file_name, path, size_bytes, mime_type, gd)
-         SELECT id, $2, $3, $4, $5, $6 FROM users
+		`INSERT INTO files (user_id, file_name, path, size_bytes, gd)
+         SELECT id, $2, $3, $4, $5 FROM users
          WHERE login = $1`,
-		login, header.Filename, path, header.Size, header.Header.Get("Content-Type"), 3,
+		login, filename, path, size, 3,
 	)
 	if err != nil {
 		fmt.Println("Error on query: ", err)
@@ -222,8 +220,8 @@ func (r *RepoFiles) RepoGiveRights(ctx context.Context, authorID int, filename s
 	}
 
 	_, err = r.pool.Exec(ctx,
-		`INSERT INTO files (user_id, file_name, path, size_bytes, mime_type, gd)
-        SELECT $1, file_name, path, size_bytes, mime_type, $2
+		`INSERT INTO files (user_id, file_name, path, size_bytes, gd)
+        SELECT $1, file_name, path, size_bytes, $2
         FROM files
         WHERE file_name = $3 AND path = $4`,
 		userID, rights, filename, filePath,
@@ -234,4 +232,19 @@ func (r *RepoFiles) RepoGiveRights(ctx context.Context, authorID int, filename s
 	}
 
 	return nil
+}
+
+func (r *RepoFiles) GetAESKeyByUserID(ctx context.Context, userID int) ([]byte, error) {
+	return []byte("1234567890123456"), nil
+	/*var aesKey []byte
+		err := r.pool.QueryRow(ctx, `
+	        SELECT aes_key FROM sessions
+	        WHERE user_id = $1 AND expires_at > NOW()
+	        ORDER BY created_at DESC
+	        LIMIT 1
+	    `, userID).Scan(&aesKey)
+		if err != nil {
+			return nil, fmt.Errorf("GetAESKeyByUserID: %w", err)
+		}
+		return aesKey, nil*/
 }
