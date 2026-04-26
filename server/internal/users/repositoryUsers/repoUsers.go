@@ -154,3 +154,13 @@ func (r *RepoUsers) GetLoginByID(ctx context.Context, userID int) (string, error
 	}
 	return login, nil
 }
+
+// internal/users/repository.go
+func (r *RepoUsers) UpdateAESKey(ctx context.Context, userID int, key []byte) error {
+	_, err := r.Pool.Exec(ctx,
+		`UPDATE sessions SET aes_key = $1
+     WHERE user_id = $2 AND expires_at > NOW() AND confirmed = TRUE`,
+		key, userID,
+	)
+	return err
+}

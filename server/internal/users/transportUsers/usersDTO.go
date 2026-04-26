@@ -49,3 +49,12 @@ type Confirm2FADTO struct {
 type Delete2FADTO struct {
 	Code string `json:"code"`
 }
+
+type keyExchangeRequest struct {
+	N string `json:"n"`
+	E string `json:"e"`
+}
+
+type keyExchangeResponse struct {
+	EncryptedAESKey string `json:"encrypted_aes_key"`
+}
